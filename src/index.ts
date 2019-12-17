@@ -6,7 +6,8 @@ const redis = require('redis');
 const asyncRedis = require('async-redis');
 
 export type MemoizeOptions = {
-  redisUrl: string;
+  redisUrl?: string;
+  redisClient?: any;
   prefix: string;
   expires: number;
   statsOutputInterval?: number | null;
@@ -80,8 +81,7 @@ const createRedisPromiseMemoize = <A extends any[], R>(
   }
 
   const { redisUrl, prefix, expires, statsOutputInterval } = optionsWithDefaults;
-
-  const redisClient = createRedis(redisUrl);
+  const redisClient = optionsWithDefaults.redisClient || createRedis(redisUrl);
   const getRedisKey = (key: string) => `${prefix}${key}`;
   const getCacheKey = defaultGetCacheKey;
 
@@ -138,9 +138,7 @@ const createRedisPromiseMemoize = <A extends any[], R>(
   return Object.assign(memoized, {
     stats,
     quit: () =>
-      new Promise((resolve, reject) =>
-        redisClient.quit((error?: Error) => (error ? reject(error) : resolve()))
-      ),
+      new Promise((resolve, reject) => redisClient.quit((error?: Error) => (error ? reject(error) : resolve()))),
   });
 };
 
