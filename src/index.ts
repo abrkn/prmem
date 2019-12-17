@@ -68,10 +68,6 @@ const createRedisPromiseMemoize = <A extends any[], R>(
 
   let lastStatsOutput = new Date();
 
-  if (typeof optionsWithDefaults.redisUrl !== 'string') {
-    throw new Error('redisUrl option must be string');
-  }
-
   if (typeof optionsWithDefaults.expires !== 'number') {
     throw new Error('expires option must be number of seconds');
   }
@@ -80,8 +76,12 @@ const createRedisPromiseMemoize = <A extends any[], R>(
     throw new Error('expires option must be greater than zero');
   }
 
+  if (!optionsWithDefaults.redisUrl && !optionsWithDefaults.redisClient) {
+    throw new Error('Either redisClient ro redisUrl must be set');
+  }
+
   const { redisUrl, prefix, expires, statsOutputInterval } = optionsWithDefaults;
-  const redisClient = optionsWithDefaults.redisClient || createRedis(redisUrl);
+  const redisClient = optionsWithDefaults.redisClient || createRedis(redisUrl!);
   const getRedisKey = (key: string) => `${prefix}${key}`;
   const getCacheKey = defaultGetCacheKey;
 
