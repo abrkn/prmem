@@ -76,7 +76,7 @@ const createRedisPromiseMemoize = <A extends any[], R>(
     throw new Error('expires option must be greater than zero');
   }
 
-  if (!optionsWithDefaults.redisUrl && !optionsWithDefaults.redisClient) {
+  if (typeof optionsWithDefaults.redisUrl !== 'string' && !optionsWithDefaults.redisClient) {
     throw new Error('Either redisClient ro redisUrl must be set');
   }
 
