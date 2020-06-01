@@ -28,6 +28,8 @@
     "url": "git+https://github.com/abrkn/prmem.git"
   },
   "devDependencies": {
+    "@types/node": "12.12.7",
+    "@types/serialize-javascript": "1.5.0",
     "@types/jest": "24.0.22",
     "@types/redis": "2.8.14",
     "async-redis": "1.1.7",
@@ -45,8 +47,6 @@
     "async-redis": "1.1.7"
   },
   "dependencies": {
-    "@types/node": "12.12.7",
-    "@types/serialize-javascript": "1.5.0",
     "serialize-javascript": "2.1.0"
   }
 }
