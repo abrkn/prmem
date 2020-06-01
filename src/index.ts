@@ -1,6 +1,5 @@
 import { createHash } from 'crypto';
 import * as serialize from 'serialize-javascript';
-import { safePromise } from 'safep';
 
 const redis = require('redis');
 const asyncRedis = require('async-redis');
@@ -121,13 +120,7 @@ const createRedisPromiseMemoize = <A extends any[], R>(
     stats.misses += 1;
     maybeOutputStats();
 
-    const [error, result]: [Error?, R?] = await safePromise(fn(...args));
-
-    if (error !== undefined) {
-      debug(`Execute error for ${innerKey}`, error);
-      throw error;
-    }
-
+    const result = await fn(...args);
     const resultToCache = toCached(result);
 
     await redisClient.setex(redisKey, expires, resultToCache);
