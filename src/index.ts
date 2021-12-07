@@ -45,8 +45,10 @@ const fromCached = (value: string) => {
 const createRedisPromiseMemoize = <A extends any[], R>(
   fn: (...args: A) => PromiseLike<R>,
   redisClient: RedisClient,
-  { expires, prefix, statsOutputInterval }: MemoizeOptions
+  options?: MemoizeOptions
 ) => {
+  let { expires, prefix, statsOutputInterval } = options ?? {};
+
   prefix = prefix ?? 'prmem:';
   statsOutputInterval = statsOutputInterval ?? 60;
   expires = expires ?? 60;
