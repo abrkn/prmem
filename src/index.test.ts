@@ -5,7 +5,13 @@ import prmem from './index';
 const mems = {
   items: [],
   quit: async () => {
-    await Promise.all(mems.items.map((_: any) => _.quit()));
+    await Promise.all(
+      mems.items.map(async (_: any) => {
+        try {
+          await _.quit();
+        } catch (eror) {}
+      })
+    );
     mems.items.splice(0);
   },
   push: (item: any) => {

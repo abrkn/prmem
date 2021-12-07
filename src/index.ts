@@ -1,8 +1,6 @@
 import { createHash } from 'crypto';
 import * as serialize from 'serialize-javascript';
-
-const redis = require('redis');
-const asyncRedis = require('async-redis');
+import { createClient } from 'redis';
 
 export type MemoizeOptions = {
   redisUrl?: string;
@@ -18,12 +16,6 @@ const defaultOptions: Partial<MemoizeOptions> = {
 };
 
 const deserialize = (_: string) => eval('(' + _ + ')');
-
-const createRedis = (redisUrl: string) => {
-  const client = redis.createClient(redisUrl);
-  const asyncRedisClient = asyncRedis.decorate(client);
-  return asyncRedisClient;
-};
 
 const defaultGetCacheKey = (...args: any[]) => {
   const hash = createHash('sha1');
@@ -91,7 +83,11 @@ const createRedisPromiseMemoize = <A extends any[], R>(
     expires,
     statsOutputInterval,
   } = optionsWithDefaults;
-  const redisClient = optionsWithDefaults.redisClient || createRedis(redisUrl!);
+  const redisClient =
+    optionsWithDefaults.redisClient || createClient({ url: redisUrl! });
+
+  redisClient.connect();
+
   const getRedisKey = (key: string) => `${prefix}${key}`;
   const getCacheKey = defaultGetCacheKey;
 
@@ -137,17 +133,14 @@ const createRedisPromiseMemoize = <A extends any[], R>(
     const result = await fn(...args);
     const resultToCache = toCached(result);
 
-    await redisClient.setex(redisKey, expires, resultToCache);
+    await redisClient.set(redisKey, resultToCache, { EX: expires });
 
     return result as R;
   };
 
   return Object.assign(memoized, {
     stats,
-    quit: () =>
-      new Promise((resolve, reject) =>
-        redisClient.quit((error?: Error) => (error ? reject(error) : resolve()))
-      ),
+    quit: () => redisClient.quit(),
   });
 };
 
