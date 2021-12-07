@@ -59,7 +59,10 @@ const createRedisPromiseMemoize = <A extends any[], R>(
   fn: (...args: A) => PromiseLike<R>,
   options: Partial<MemoizeOptions>
 ) => {
-  const optionsWithDefaults = { ...defaultOptions, ...options } as MemoizeOptions;
+  const optionsWithDefaults = {
+    ...defaultOptions,
+    ...options,
+  } as MemoizeOptions;
 
   const debug = require('debug')(`prmem:${optionsWithDefaults.prefix}`);
 
@@ -75,11 +78,19 @@ const createRedisPromiseMemoize = <A extends any[], R>(
     throw new Error('expires option must be greater than zero');
   }
 
-  if (typeof optionsWithDefaults.redisUrl !== 'string' && !optionsWithDefaults.redisClient) {
+  if (
+    typeof optionsWithDefaults.redisUrl !== 'string' &&
+    !optionsWithDefaults.redisClient
+  ) {
     throw new Error('Either redisClient ro redisUrl must be set');
   }
 
-  const { redisUrl, prefix, expires, statsOutputInterval } = optionsWithDefaults;
+  const {
+    redisUrl,
+    prefix,
+    expires,
+    statsOutputInterval,
+  } = optionsWithDefaults;
   const redisClient = optionsWithDefaults.redisClient || createRedis(redisUrl!);
   const getRedisKey = (key: string) => `${prefix}${key}`;
   const getCacheKey = defaultGetCacheKey;
@@ -94,7 +105,10 @@ const createRedisPromiseMemoize = <A extends any[], R>(
       return;
     }
 
-    if (new Date().getTime() - lastStatsOutput.getTime() < statsOutputInterval * 1000) {
+    if (
+      new Date().getTime() - lastStatsOutput.getTime() <
+      statsOutputInterval * 1000
+    ) {
       return;
     }
 
@@ -131,7 +145,9 @@ const createRedisPromiseMemoize = <A extends any[], R>(
   return Object.assign(memoized, {
     stats,
     quit: () =>
-      new Promise((resolve, reject) => redisClient.quit((error?: Error) => (error ? reject(error) : resolve()))),
+      new Promise((resolve, reject) =>
+        redisClient.quit((error?: Error) => (error ? reject(error) : resolve()))
+      ),
   });
 };
 
