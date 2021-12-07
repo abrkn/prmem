@@ -2,17 +2,12 @@ import { createHash } from 'crypto';
 import * as serialize from 'serialize-javascript';
 import { createClient } from 'redis';
 
-export type MemoizeOptions = {
-  redisUrl?: string;
-  redisClient?: any;
-  prefix: string;
-  expires: number;
-  statsOutputInterval?: number | null;
-};
+export type RedisClient = ReturnType<typeof createClient>;
 
-const defaultOptions: Partial<MemoizeOptions> = {
-  prefix: 'prmem:',
-  statsOutputInterval: 60,
+export type MemoizeOptions = {
+  prefix?: string;
+  expires?: number;
+  statsOutputInterval?: number | null;
 };
 
 const deserialize = (_: string) => eval('(' + _ + ')');
@@ -49,44 +44,26 @@ const fromCached = (value: string) => {
 
 const createRedisPromiseMemoize = <A extends any[], R>(
   fn: (...args: A) => PromiseLike<R>,
-  options: Partial<MemoizeOptions>
+  redisClient: RedisClient,
+  { expires, prefix, statsOutputInterval }: MemoizeOptions
 ) => {
-  const optionsWithDefaults = {
-    ...defaultOptions,
-    ...options,
-  } as MemoizeOptions;
+  prefix = prefix ?? 'prmem:';
+  statsOutputInterval = statsOutputInterval ?? 60;
+  expires = expires ?? 60;
 
-  const debug = require('debug')(`prmem:${optionsWithDefaults.prefix}`);
+  const debug = require('debug')(`prmem:${prefix}`);
 
-  debug({ options: optionsWithDefaults });
+  debug({ expires, prefix, redisClient, statsOutputInterval });
 
   let lastStatsOutput = new Date();
 
-  if (typeof optionsWithDefaults.expires !== 'number') {
+  if (typeof expires !== 'number') {
     throw new Error('expires option must be number of seconds');
   }
 
-  if (optionsWithDefaults.expires <= 0) {
+  if (expires <= 0) {
     throw new Error('expires option must be greater than zero');
   }
-
-  if (
-    typeof optionsWithDefaults.redisUrl !== 'string' &&
-    !optionsWithDefaults.redisClient
-  ) {
-    throw new Error('Either redisClient ro redisUrl must be set');
-  }
-
-  const {
-    redisUrl,
-    prefix,
-    expires,
-    statsOutputInterval,
-  } = optionsWithDefaults;
-  const redisClient =
-    optionsWithDefaults.redisClient || createClient({ url: redisUrl! });
-
-  redisClient.connect();
 
   const getRedisKey = (key: string) => `${prefix}${key}`;
   const getCacheKey = defaultGetCacheKey;

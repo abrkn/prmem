@@ -1,43 +1,27 @@
 import { randomBytes } from 'crypto';
+import { createClient } from 'redis';
 import delay from 'delay';
-import prmem from './index';
+import prmem, { RedisClient } from './index';
 
-const mems = {
-  items: [],
-  quit: async () => {
-    await Promise.all(
-      mems.items.map(async (_: any) => {
-        try {
-          await _.quit();
-        } catch (eror) {}
-      })
-    );
-    mems.items.splice(0);
-  },
-  push: (item: any) => {
-    (mems.items as any[]).push(item);
-    return item;
-  },
-};
+const redisClient = createClient() as RedisClient;
 
-beforeEach(mems.quit);
-afterEach(mems.quit);
+beforeAll(() => redisClient.connect());
+
+afterAll(() => redisClient.quit());
 
 const getRandomRedisPrefix = (name: string) =>
   ['prmem', 'test', name, randomBytes(4).toString('hex')].join(':');
 
 test('test sum', async () => {
-  const mem = mems.push(
-    prmem(
-      async (a: number, b: number) => {
-        return a + b;
-      },
-      {
-        redisUrl: '',
-        expires: 5,
-        prefix: getRandomRedisPrefix('sum'),
-      }
-    )
+  const mem = prmem(
+    async (a: number, b: number) => {
+      return a + b;
+    },
+    redisClient,
+    {
+      expires: 5,
+      prefix: getRandomRedisPrefix('sum'),
+    }
   );
 
   let result: number;
@@ -60,17 +44,15 @@ test('test sum', async () => {
 });
 
 test('test expiration', async () => {
-  const mmem = mems.push(
-    prmem(
-      async (a: number, b: number) => {
-        return (a + b) as number;
-      },
-      {
-        redisUrl: '',
-        expires: 1,
-        prefix: getRandomRedisPrefix('expiration'),
-      }
-    )
+  const mmem = prmem(
+    async (a: number, b: number) => {
+      return (a + b) as number;
+    },
+    redisClient,
+    {
+      expires: 1,
+      prefix: getRandomRedisPrefix('expiration'),
+    }
   );
 
   let result: number;
@@ -95,17 +77,15 @@ test('test expiration', async () => {
 });
 
 test('test undefined', async () => {
-  const mem = mems.push(
-    prmem(
-      async () => {
-        return undefined;
-      },
-      {
-        redisUrl: '',
-        expires: 5,
-        prefix: getRandomRedisPrefix('sum'),
-      }
-    )
+  const mem = prmem(
+    async () => {
+      return undefined;
+    },
+    redisClient,
+    {
+      expires: 5,
+      prefix: getRandomRedisPrefix('sum'),
+    }
   );
 
   let result: undefined;
@@ -124,17 +104,15 @@ test('test undefined', async () => {
 });
 
 test('test null', async () => {
-  const mem = mems.push(
-    prmem(
-      async () => {
-        return null;
-      },
-      {
-        redisUrl: '',
-        expires: 5,
-        prefix: getRandomRedisPrefix('null'),
-      }
-    )
+  const mem = prmem(
+    async () => {
+      return null;
+    },
+    redisClient,
+    {
+      expires: 5,
+      prefix: getRandomRedisPrefix('null'),
+    }
   );
 
   let result: null;
@@ -153,17 +131,15 @@ test('test null', async () => {
 });
 
 test('test object', async () => {
-  const mem = mems.push(
-    prmem(
-      async (a: number, b: number) => {
-        return { sum: a + b };
-      },
-      {
-        redisUrl: '',
-        expires: 5,
-        prefix: getRandomRedisPrefix('object'),
-      }
-    )
+  const mem = prmem(
+    async (a: number, b: number) => {
+      return { sum: a + b };
+    },
+    redisClient,
+    {
+      expires: 5,
+      prefix: getRandomRedisPrefix('object'),
+    }
   );
 
   let result: any;
@@ -182,17 +158,15 @@ test('test object', async () => {
 });
 
 test('test array', async () => {
-  const mem = mems.push(
-    prmem(
-      async (...parts: string[]) => {
-        return parts;
-      },
-      {
-        redisUrl: '',
-        expires: 5,
-        prefix: getRandomRedisPrefix('array'),
-      }
-    )
+  const mem = prmem(
+    async (...parts: string[]) => {
+      return parts;
+    },
+    redisClient,
+    {
+      expires: 5,
+      prefix: getRandomRedisPrefix('array'),
+    }
   );
 
   let result: any;
@@ -213,18 +187,16 @@ test('test array', async () => {
 test('test empty args async', async () => {
   let calls = 0;
 
-  const mem = mems.push(
-    prmem(
-      async () => {
-        calls += 1;
-        return calls;
-      },
-      {
-        redisUrl: '',
-        expires: 5,
-        prefix: getRandomRedisPrefix('empty-args'),
-      }
-    )
+  const mem = prmem(
+    async () => {
+      calls += 1;
+      return calls;
+    },
+    redisClient,
+    {
+      expires: 5,
+      prefix: getRandomRedisPrefix('empty-args'),
+    }
   );
 
   let result: any;
