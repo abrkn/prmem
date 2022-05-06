@@ -55,7 +55,7 @@ const createRedisPromiseMemoize = <A extends any[], R>(
 
   const debug = require('debug')(`prmem:${prefix}`);
 
-  debug({ expires, prefix, redisClient, statsOutputInterval });
+  debug({ expires, prefix, statsOutputInterval });
 
   let lastStatsOutput = new Date();
 
